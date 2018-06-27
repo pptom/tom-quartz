@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>定时任务控制</title>
+    <link href="/static/js/semantic/semantic.min.css" th:href="@{/js/semantic/semantic.min.css}" rel="stylesheet"/>
+</head>
+<body>
+    <div class="ui grid">
+        <div class="row">
+            <div class="one wide column">
+
+            </div>
+            <div class="fourteen wide column">
+                <table class="ui celled table">
+                    <thead>
+                    <tr>
+                        <th>任务名称</th>
+                        <th>任务分组</th>
+                        <th>任务描述</th>
+                        <th>任务全限定类名</th>
+                        <th>执行时间</th>
+                        <th>触发器名称</th>
+                        <th>任务状态</th>
+                        <th>操作</th>
+                    </tr></thead>
+                    <tbody id="cat-table">
+                    <tr th:each="scheduleJob,iterStat : ${scheduleJobList}">
+                        <td th:text="${scheduleJob.jobName}"></td>
+                        <td th:text="${scheduleJob.jobGroup}"></td>
+                        <td th:text="${scheduleJob.description}"></td>
+                        <td th:text="${scheduleJob.className}"></td>
+                        <td>
+                            <div class="ui transparent input">
+                                <input th:class="${scheduleJob.id}" type="text" th:value="${scheduleJob.cronExpression}">
+                            </div>
+                        </td>
+                        <td th:text="${scheduleJob.triggerName}"></td>
+                        <td th:if="!${scheduleJob.pause}">运行中</td>
+                        <td th:if="${scheduleJob.pause}">暂停中</td>
+                        <td>
+                            <button class="ui green button" th:onclick="'javascript:trigger(\'' + ${scheduleJob.id} + '\');'">触发</button>
+                            <th:block th:remove="tag" th:if="!${scheduleJob.pause}">
+                                <button class="ui orange button" th:onclick="'javascript:pausejob(\'' + ${scheduleJob.id} + '\');'">暂停</button>
+                            </th:block>
+                            <th:block th:remove="tag" th:if="${scheduleJob.pause}">
+                                <button class="ui grey button" th:onclick="'javascript:resumejob(\'' + ${scheduleJob.id} + '\');'">恢复</button>
+                            </th:block>
+                            <button class="ui red button" th:onclick="'javascript:removejob(\'' + ${scheduleJob.id} + '\');'">移除</button>
+                            <button class="ui blue button" th:onclick="'javascript:updatejob(\'' + ${scheduleJob.id} + '\');'">更新</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="one wide column">
+
+            </div>
+        </div>
+
+    </div>
+    <div id="bi-tip-modal" class="ui mini modal">
+        <div class="header">提示</div>
+        <div id="bi-tip-content" class="content">
+        </div>
+        <div class="actions">
+            <div class="ui green ok button">确定</div>
+            <div id="bi-cancel-btn" class="ui red cancel button">取消</div>
+        </div>
+    </div>
+    <!-- js start -->
+    <!-- jquery -->
+    <script src="/static/js/jquery/3.2.1/jquery.min.js" th:src="@{/js/jquery/3.2.1/jquery.min.js}"></script>
+    <script src="/static/js/semantic/semantic.min.js" th:src="@{/js/semantic/semantic.min.js}"></script>
+
+    <script>
+        /*<![CDATA[*/
+        function showTip(content){
+            $('#bi-tip-content').html('<p>' + content + '</p>');
+            $('#bi-tip-modal').modal({
+                closable: false,
+                onApprove : function () {
+                    window.location.reload();
+                },
+                onDeny: function(){
+                    // window.alert('Wait not yet!');
+                    // return false;
+                },
+            }).modal('show');
+        }
+
+        function trigger(jobId) {
+            $('#bi-cancel-btn').show();
+            $('#bi-tip-content').html('<p>' + '确认启动任务吗?' + '</p>');
+            $('#bi-tip-modal').modal({
+                closable: false,
+                onApprove : function () {
+                    var url = '/job/trigger/' + jobId;
+                    $.ajax({
+                        url: url,
+                        success: function (data) {
+                            var success = data.success;
+                            $('#bi-cancel-btn').hide();
+                            if (success) {
+                                showTip(data.msg);
+                            } else {
+                                showTip(data.msg);
+                            }
+                        }
+                    }).done(function() {
+                    });
+                },
+                onDeny: function(){
+                    // window.alert('Wait not yet!');
+                    // return false;
+                },
+            }).modal('show');
+        }
+
+        function pausejob(jobId) {
+            $('#bi-cancel-btn').show();
+            $('#bi-tip-content').html('<p>' + '是否暂停当前任务?' + '</p>');
+            $('#bi-tip-modal').modal({
+                closable: false,
+                onApprove : function () {
+                    var url = '/job/pause/' + jobId;
+                    $.ajax({
+                        url: url,
+                        success: function (data) {
+                            var success = data.success;
+                            $('#bi-cancel-btn').hide();
+                            if (success) {
+                                showTip(data.msg);
+                            } else {
+                                showTip(data.msg);
+                            }
+                        }
+                    }).done(function() {
+                    });
+                },
+                onDeny: function(){
+                    // window.alert('Wait not yet!');
+                    // return false;
+                },
+            }).modal('show');
+        }
+
+        function resumejob(jobId) {
+            $('#bi-cancel-btn').show();
+            $('#bi-tip-content').html('<p>' + '是否恢复当前任务?' + '</p>');
+            $('#bi-tip-modal').modal({
+                closable: false,
+                onApprove : function () {
+                    var url = '/job/resume/' + jobId;
+                    $.ajax({
+                        url: url,
+                        success: function (data) {
+                            var success = data.success;
+                            $('#bi-cancel-btn').hide();
+                            if (success) {
+                                showTip(data.msg);
+                            } else {
+                                showTip(data.msg);
+                            }
+                        }
+                    }).done(function() {
+                    });
+                },
+                onDeny: function(){
+                    // window.alert('Wait not yet!');
+                    // return false;
+                },
+            }).modal('show');
+        }
+
+        function removejob(jobId) {
+            $('#bi-cancel-btn').show();
+            $('#bi-tip-content').html('<p>' + '是否移除当前任务?' + '</p>');
+            $('#bi-tip-modal').modal({
+                closable: false,
+                onApprove : function () {
+                    var url = '/job/delete/' + jobId;
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        success: function (data) {
+                            var success = data.success;
+                            $('#bi-cancel-btn').hide();
+                            if (success) {
+                                showTip(data.msg);
+                            } else {
+                                showTip(data.msg);
+                            }
+                        }
+                    }).done(function() {
+                    });
+                },
+                onDeny: function(){
+                    // window.alert('Wait not yet!');
+                    // return false;
+                },
+            }).modal('show');
+        }
+
+        function updatejob(jobId) {
+            $('#bi-cancel-btn').show();
+            $('#bi-tip-content').html('<p>' + '是否更新当前任务?' + '</p>');
+            $('#bi-tip-modal').modal({
+                closable: false,
+                onApprove : function () {
+                    var cronExpression = $('.' + jobId).val();
+                    var url = '/job/update/' + jobId;
+                    var param = {cronExpression:cronExpression};
+                    $.ajax({
+                        url: url,
+                        data: param,
+                        type: 'POST',
+                        success: function (data) {
+                            var success = data.success;
+                            $('#bi-cancel-btn').hide();
+                            if (success) {
+                                showTip(data.msg);
+                            } else {
+                                showTip(data.msg);
+                            }
+                        }
+                    }).done(function() {
+                    });
+                },
+                onDeny: function(){
+                    // window.alert('Wait not yet!');
+                    // return false;
+                },
+            }).modal('show');
+        }
+
+        $(function () {
+        });
+        /*]]>*/
+    </script>
+    <!-- js end -->
+</body>
+</html>
